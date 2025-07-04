@@ -1,0 +1,35 @@
+name: Auto Update Playlist every 20 minutes
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"   # every 20 minutes
+  workflow_dispatch:         # manual run option
+
+jobs:
+  update-playlist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.TARGET_REPO }}
+          token: ${{ secrets.GH_TOKEN }}
+          ref: main
+
+      - name: Download new playlist file
+        run: |
+          curl -L -o playlist.m3u "${{ secrets.PLAYLIST_URL }}"
+
+      - name: Commit and push if playlist changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet playlist.m3u; then
+            echo "✅ No changes detected"
+          else
+            git add playlist.m3u
+            git commit -m "Update playlist.m3u automatically"
+            git push origin main
+          fi
