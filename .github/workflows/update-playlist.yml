@@ -3,7 +3,7 @@ name: Auto Update Playlist every 15 minutes
 on:
   schedule:
     - cron: "*/15 * * * *"   # every 15 minutes
-  workflow_dispatch:         # manual run option
+  workflow_dispatch:
 
 jobs:
   update-playlist:
@@ -19,22 +19,20 @@ jobs:
 
       - name: Download new playlist file
         run: |
-          curl -L -o new_playlist.m3u "${{ secrets.API_U3 }}"
+          # Get current time in BD time (Asia/Dhaka)
+          LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %H:%M:%S")
 
-      - name: Prepend header comment with BD time
-        run: |
-          # Bangladesh time (UTC+6)
-          DATE=$(TZ='Asia/Dhaka' date '+%Y-%m-%d %H:%M:%S')
-          
-          # Base64 encoded header lines
-          echo "UGxheWxpc3QgQnkgQWJ1IFNBRUVJRCBYIE5vb2I=" | base64 -d > header.txt
-          echo "aHR0cHM6Ly90Lm1lL2FidXNhZWVpZHg=" | base64 -d >> header.txt
-          echo "R2l0aHViIGh0dHBzOi8vZ2l0aHViLmNvbS9hYnVzYWVlaWR4Lw==" | base64 -d >> header.txt
-          echo "SXB0diB0ZWxlZ3JhbSBjaGFubmVscyBodHRwczovL3QubWUv eGZpcmVmbGl4" | base64 -d >> header.txt
-          echo "# last update: $DATE BD" >> header.txt
-
-          # Combine header + downloaded playlist
-          cat header.txt new_playlist.m3u > playlist.m3u
+          # Write header comments
+          {
+            echo "# ${{ secrets.CREDIT_LINE1 }}"
+            echo "# ${{ secrets.CREDIT_LINE2 }}"
+            echo "# ${{ secrets.CREDIT_LINE3 }}"
+            echo "# ${{ secrets.CREDIT_LINE4 }}"
+            echo "# Last update: $LAST_UPDATE (Asia/Dhaka)"
+            echo
+            # Append downloaded playlist content
+            curl -L "${{ secrets.API_U3 }}"
+          } > playlist.m3u
 
       - name: Commit and push if playlist changed
         run: |
