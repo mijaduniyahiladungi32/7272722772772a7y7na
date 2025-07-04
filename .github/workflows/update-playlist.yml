@@ -3,7 +3,7 @@ name: Auto Update Playlist every 15 minutes
 on:
   schedule:
     - cron: "*/15 * * * *"   # every 15 minutes
-  workflow_dispatch:
+  workflow_dispatch:         # manual run option
 
 jobs:
   update-playlist:
@@ -17,23 +17,24 @@ jobs:
           token: ${{ secrets.API_U2 }}
           ref: main
 
-      - name: Download new playlist and add credit header
+      - name: Download new playlist file
         run: |
-          # Download the playlist
-          curl -L -o playlist_raw.m3u "${{ secrets.API_U3 }}"
+          curl -L -o new_playlist.m3u "${{ secrets.API_U3 }}"
 
-          # Get BD time (Asia/Dhaka)
-          BD_TIME=$(TZ='Asia/Dhaka' date '+%Y-%m-%d %H:%M')
+      - name: Prepend header comment with BD time
+        run: |
+          # Bangladesh time (UTC+6)
+          DATE=$(TZ='Asia/Dhaka' date '+%Y-%m-%d %H:%M:%S')
+          
+          # Base64 encoded header lines
+          echo "UGxheWxpc3QgQnkgQWJ1IFNBRUVJRCBYIE5vb2I=" | base64 -d > header.txt
+          echo "aHR0cHM6Ly90Lm1lL2FidXNhZWVpZHg=" | base64 -d >> header.txt
+          echo "R2l0aHViIGh0dHBzOi8vZ2l0aHViLmNvbS9hYnVzYWVlaWR4Lw==" | base64 -d >> header.txt
+          echo "SXB0diB0ZWxlZ3JhbSBjaGFubmVscyBodHRwczovL3QubWUv eGZpcmVmbGl4" | base64 -d >> header.txt
+          echo "# last update: $DATE BD" >> header.txt
 
-          # Add credit header + downloaded content
-          echo "# Playlist By Abu SAEEID
-# By Abu SAEEID X Noob https://t.me/abusaeeidx
-# Github https://github.com/abusaeeidx/
-# Iptv telegram channels https://t.me/xfireflix
-# Last update: ${BD_TIME} BD time
-" > playlist.m3u
-
-          cat playlist_raw.m3u >> playlist.m3u
+          # Combine header + downloaded playlist
+          cat header.txt new_playlist.m3u > playlist.m3u
 
       - name: Commit and push if playlist changed
         run: |
