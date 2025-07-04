@@ -19,8 +19,8 @@ jobs:
 
       - name: Download new playlist file
         run: |
-          # Get current time in BD time (Asia/Dhaka)
-          LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %H:%M:%S")
+          # Get current time in BD time (Asia/Dhaka) in 12-hour format with AM/PM
+          LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
 
           # Write header comments
           {
