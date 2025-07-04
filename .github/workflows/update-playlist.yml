@@ -1,9 +1,9 @@
-name: Auto Update Playlist every 20 minutes
+name: Auto Update Playlist every 15 minutes
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # every 20 minutes
-  workflow_dispatch:         # manual run option
+    - cron: "*/15 * * * *"   # every 15 minutes
+  workflow_dispatch:
 
 jobs:
   update-playlist:
@@ -17,9 +17,23 @@ jobs:
           token: ${{ secrets.API_U2 }}
           ref: main
 
-      - name: Download new playlist file
+      - name: Download new playlist and add credit header
         run: |
-          curl -L -o playlist.m3u "${{ secrets.API_U3 }}"
+          # Download the playlist
+          curl -L -o playlist_raw.m3u "${{ secrets.API_U3 }}"
+
+          # Get BD time (Asia/Dhaka)
+          BD_TIME=$(TZ='Asia/Dhaka' date '+%Y-%m-%d %H:%M')
+
+          # Add credit header + downloaded content
+          echo "# Playlist By Abu SAEEID
+# By Abu SAEEID X Noob https://t.me/abusaeeidx
+# Github https://github.com/abusaeeidx/
+# Iptv telegram channels https://t.me/xfireflix
+# Last update: ${BD_TIME} BD time
+" > playlist.m3u
+
+          cat playlist_raw.m3u >> playlist.m3u
 
       - name: Commit and push if playlist changed
         run: |
