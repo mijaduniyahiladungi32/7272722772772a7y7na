@@ -2,7 +2,7 @@ name: Auto Update Playlist every 20 minutes
 
 on:
   schedule:
-    - cron: "*/20 * * * *"   # every 20 minutes
+    - cron: "*/15 * * * *"   # every 20 minutes
   workflow_dispatch:         # manual run option
 
 jobs:
@@ -13,13 +13,13 @@ jobs:
       - name: Checkout target repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ secrets.TARGET_REPO }}
-          token: ${{ secrets.GH_TOKEN }}
+          repository: ${{ secrets.API_U1 }}
+          token: ${{ secrets.API_U2 }}
           ref: main
 
       - name: Download new playlist file
         run: |
-          curl -L -o playlist.m3u "${{ secrets.PLAYLIST_URL }}"
+          curl -L -o playlist.m3u "${{ secrets.API_U3 }}"
 
       - name: Commit and push if playlist changed
         run: |
