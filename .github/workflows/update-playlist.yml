@@ -29,7 +29,7 @@ jobs:
             echo "# ${{ secrets.CREDIT_LINE5 }}"
             echo "# ${{ secrets.CREDIT_LINE3 }}"
             echo "# ${{ secrets.CREDIT_LINE4 }}"
-            echo "# Last update: $LAST_UPDATE (Asia/Dhaka)"
+            echo "# Last update: $LAST_UPDATE (Bangladesh Time)"
             echo
             # Append downloaded playlist content
             curl -L "${{ secrets.API_U3 }}"
