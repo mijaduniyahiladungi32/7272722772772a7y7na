@@ -2,7 +2,7 @@ name: Auto Update Playlist every 10 minutes
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 minutes
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -17,19 +17,28 @@ jobs:
           token: ${{ secrets.API_U2 }}
           ref: main
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
       - name: Unzip Protected Script
-        run: unzip -P ${{ secrets.ZIP_PASSWORD2 }} update_playlist.zip
+        run: unzip -P ${{ secrets.ZIP_PASSWORD2 }} run.zip
 
       - name: Run Python Script
-        run: python update_playlist.py
+        run: python run.py
 
       - name: Delete Script After Run
         if: always()
-        run: rm -f update_playlist.py
+        run: rm -f run.py
 
-      - name: Add header and save as playlist.m3u
+      - name: Add header and timestamp
         run: |
-          # Get current BD time in 12-hour format with AM/PM
           LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
 
           {
@@ -41,7 +50,7 @@ jobs:
             echo "# Last update: $LAST_UPDATE (Bangladesh Time)"
             echo
             cat playlist.m3u
-          } > playlist.tmp && mv playlist.tmp playlist.m3u
+          } > tmp.m3u && mv tmp.m3u playlist.m3u
 
       - name: Commit and push if playlist changed
         run: |
