@@ -1,5 +1,4 @@
 name: Auto Update Playlist every 10 minutes
-
 on:
   schedule:
     - cron: "*/10 * * * *"
