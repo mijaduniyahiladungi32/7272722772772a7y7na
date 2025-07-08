@@ -19,7 +19,7 @@ jobs:
 
       - name: Verify script.zip exists
         run: |
-          if [ ! -f script.zip ]; then
+          if [ ! -f file.zip ]; then
             echo "❌ script.zip not found! Please commit it to your repository."
             exit 1
           fi
@@ -36,13 +36,13 @@ jobs:
 
       - name: Unzip run.py securely
         run: |
-          unzip -P "${{ secrets.PY_ZIP_PASS }}" update_playlist.zip || { echo "❌ Failed to unzip script.zip"; exit 1; }
+          unzip -P "${{ secrets.PY_ZIP_PASS }}" file.zip || { echo "❌ Failed to unzip script.zip"; exit 1; }
 
       - name: Run Python script to generate playlist
-        run: python update_playlist.py
+        run: python file.py
 
       - name: Remove sensitive script
-        run: rm -f update_playlist.py
+        run: rm -f file.py
 
       - name: Prepend header comments to playlist.m3u
         run: |
