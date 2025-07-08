@@ -17,6 +17,13 @@ jobs:
           token: ${{ secrets.API_U2 }}
           ref: main
 
+      - name: Verify script.zip exists
+        run: |
+          if [ ! -f script.zip ]; then
+            echo "❌ script.zip not found! Please commit it to your repository."
+            exit 1
+          fi
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -29,13 +36,13 @@ jobs:
 
       - name: Unzip run.py securely
         run: |
-          unzip -P "${{ secrets.PY_ZIP_PASSWORD }}" update_playlist.zip
+          unzip -P "${{ secrets.PY_ZIP_PASS }}" update_playlist.zip || { echo "❌ Failed to unzip script.zip"; exit 1; }
 
       - name: Run Python script to generate playlist
-        run: python run.py
+        run: python update_playlist.py
 
       - name: Remove sensitive script
-        run: rm -f run.py
+        run: rm -f update_playlist.py
 
       - name: Prepend header comments to playlist.m3u
         run: |
