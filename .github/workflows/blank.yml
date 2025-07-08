@@ -1,29 +1,62 @@
-name: Unzip, run and cleanup
+name: Unzip, run and update playlist
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  run-python-zip:
+  build:
     runs-on: ubuntu-latest
     env:
       ZIP_PASS: ${{ secrets.ZIP_PASS }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout main repo
         uses: actions/checkout@v3
 
-      - name: List files before unzip
-        run: ls -la
-
-      - name: Unzip protected zip
+      - name: Unzip protected file
         run: unzip -P "$ZIP_PASS" file.zip
 
-      - name: List files after unzip
-        run: ls -la
-
-      - name: Run Python script
+      - name: Run python script
         run: python file.py
 
-      - name: Cleanup - remove script
-        run: rm -f file.py
+      - name: Remove script
+        run: rm file.py
+
+      - name: Checkout target repo
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ secrets.API_U1 }}
+          token: ${{ secrets.API_U2 }}
+          ref: main
+
+      - name: Download new playlist file
+        run: |
+          # Get current time in BD time (Asia/Dhaka) in 12-hour format with AM/PM
+          LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
+
+          # Write header comments + download playlist content
+          {
+            echo "# ${{ secrets.CREDIT_LINE1 }}"
+            echo "# ${{ secrets.CREDIT_LINE2 }}"
+            echo "# ${{ secrets.CREDIT_LINE5 }}"
+            echo "# ${{ secrets.CREDIT_LINE3 }}"
+            echo "# ${{ secrets.CREDIT_LINE4 }}"
+            echo "# Last update: $LAST_UPDATE (Bangladesh Time)"
+            echo
+            curl -L "${{ secrets.API_U3 }}"
+          } > playlist.m3u
+
+      - name: Commit and push if playlist changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet playlist.m3u; then
+            echo "✅ No changes detected"
+          else
+            git add playlist.m3u
+            git commit -m "Update playlist.m3u automatically"
+            git push origin main
+          fi
