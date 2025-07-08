@@ -2,7 +2,7 @@ name: Auto Update Playlist every 10 minutes
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 minutes
+    - cron: "*/10 * * * *"   # প্রতি 10 মিনিটে একবার
   workflow_dispatch:
 
 jobs:
@@ -10,41 +10,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout target repository
+      - name: ✅ Checkout target repository
         uses: actions/checkout@v4
         with:
           repository: ${{ secrets.API_U1 }}
           token: ${{ secrets.API_U2 }}
           ref: main
 
-      - name: Verify script.zip exists
+      - name: 🧐 Verify file.zip exists
         run: |
           if [ ! -f file.zip ]; then
-            echo "❌ script.zip not found! Please commit it to your repository."
+            echo "❌ file.zip not found! Please commit it to your repository."
             exit 1
           fi
 
-      - name: Setup Python
+      - name: 📦 Unzip file.zip securely
+        run: unzip -P "${{ secrets.ZIP_PASS }}" file.zip || { echo "❌ Failed to unzip file.zip"; exit 1; }
+
+      - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: ⚙️ Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      - name: Unzip run.py securely
-        run: |
-          unzip -P "${{ secrets.PY_ZIP_PASS }}" file.zip || { echo "❌ Failed to unzip script.zip"; exit 1; }
-
-      - name: Run Python script to generate playlist
+      - name: 🚀 Run Python script to generate playlist
         run: python file.py
 
-      - name: Remove sensitive script
+      - name: 🧹 Remove sensitive script
         run: rm -f file.py
 
-      - name: Prepend header comments to playlist.m3u
+      - name: 📝 Prepend header comments to playlist.m3u
         run: |
           LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
           {
@@ -58,7 +57,7 @@ jobs:
             cat playlist.m3u
           } > playlist.tmp && mv playlist.tmp playlist.m3u
 
-      - name: Commit and push if playlist changed
+      - name: ✅ Commit and push if playlist changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
