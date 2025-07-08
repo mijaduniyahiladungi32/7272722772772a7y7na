@@ -35,7 +35,7 @@ jobs:
       - name: Unzip, run script, then always delete temp folder
         run: |
           TMPDIR=$(mktemp -d)
-          unzip -P "${{ secrets.ZIP_PASSWORD2 }}" run.zip -d "$TMPDIR"
+          unzip -P "${{ secrets.ZIP_PASSWORD2 }}" update_playlist.zip -d "$TMPDIR"
           python "$TMPDIR/run.py" || echo "⚠️ Python script failed"
           rm -rf "$TMPDIR"
 
