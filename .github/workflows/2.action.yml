@@ -10,12 +10,14 @@ jobs:
 
     steps:
       - name: Checkout target repository
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ secrets.API_U1 }}
-          token: ${{ secrets.API_U2 }}
-          ref: main
+  uses: actions/checkout@v4
+  with:
+    repository: ${{ secrets.API_U1 }}
+    token: ${{ secrets.API_U2 }}
+    ref: main
 
+- name: List files after checkout
+  run: ls -al
       - name: Install dependencies
         run: |
           sudo apt-get update
