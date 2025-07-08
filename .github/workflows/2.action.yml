@@ -2,7 +2,7 @@ name: Auto Update Playlist every 10 minutes
 
 on:
   schedule:
-    - cron: "*/25 * * * *"   # every 10 minutes
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -17,20 +17,21 @@ jobs:
           token: ${{ secrets.API_U2 }}
           ref: main
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          pip install requests
 
-      - name: Run Python script to download playlist
-        run: python update_playlist.py
+      - name: Unzip into temp folder, run, then delete
+        run: |
+          mkdir tmpdir
+          unzip -P "${{ secrets.ZIP_PASS }}" update_playlist.zip -d tmpdir
+          python tmpdir/update_playlist.py || echo "⚠️ Python script failed"
+          rm -rf tmpdir
 
       - name: Add header & timestamp
         run: |
-          # Get BD time in 12-hour format
           LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
           {
             echo "# ${{ secrets.CREDIT_LINE1 }}"
