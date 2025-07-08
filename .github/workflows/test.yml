@@ -1,62 +1,43 @@
-name: Auto Update Playlist every 10 minutes
+name: Test unzip and run
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "*/10 * * * *"
-  workflow_dispatch:
 
 jobs:
-  update-playlist:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: ✅ Print start
+        run: echo "Workflow started..."
+
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: List files
+        run: ls -lah
+
+      - name: Unzip file.zip
+        run: unzip -P "${{ secrets.ZIP_PASS }}" file.zip || { echo "❌ Unzip failed"; exit 1; }
+
+      - name: List after unzip
+        run: ls -lah
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
+      - name: Install requests
+        run: pip install requests
 
-      - name: Unzip Protected Script
-        run: unzip -P "${{ secrets.ZIP_FILE }}" update_playlist.zip
+      - name: Run script
+        run: python file.py
 
-      - name: Run Python Script
-        run: python update_playlist.py
+      - name: Cleanup
+        run: rm -f file.py
 
-      - name: Add header and timestamp
-        run: |
-          LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
-
-          {
-            echo "# ${{ secrets.CREDIT_LINE1 }}"
-            echo "# ${{ secrets.CREDIT_LINE2 }}"
-            echo "# ${{ secrets.CREDIT_LINE5 }}"
-            echo "# ${{ secrets.CREDIT_LINE3 }}"
-            echo "# ${{ secrets.CREDIT_LINE4 }}"
-            echo "# Last update: $LAST_UPDATE (Bangladesh Time)"
-            echo
-            cat playlist.m3u
-          } > tmp.m3u && mv tmp.m3u playlist.m3u
-
-      - name: Delete Script After Run
-        if: always()
-        run: rm -f update_playlist.py
-
-      - name: Commit and push if playlist changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git diff --quiet playlist.m3u; then
-            echo "✅ No changes detected"
-          else
-            git add playlist.m3u
-            git commit -m "Update playlist.m3u automatically"
-            git push origin main
-          fi
+      - name: ✅ Done
+        run: echo "Finished!"
