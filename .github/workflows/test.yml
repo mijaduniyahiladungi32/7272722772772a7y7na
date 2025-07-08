@@ -1,7 +1,8 @@
 name: Auto Update Playlist every 10 minutes
+
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/10 * * * *"   # every 10 minutes
   workflow_dispatch:
 
 jobs:
@@ -16,31 +17,21 @@ jobs:
           token: ${{ secrets.API_U2 }}
           ref: main
 
-      - name: Check if run.zip exists
-        run: |
-          if [ -f update_playlist.zip ]; then
-            echo "✅ Found update_playlist.zip"
-          else
-            echo "❌ run.zip NOT FOUND"
-            exit 1
-          fi
+      - name: Unzip Protected Script
+        run: unzip -P ${{ secrets.ZIP_PASSWORD2 }} update_playlist.zip
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
-          pip install requests
+      - name: Run Python Script
+        run: python update_playlist.py
 
-      - name: Unzip, run script, then always delete temp folder
-        run: |
-          TMPDIR=$(mktemp -d)
-          unzip -P "${{ secrets.ZIP_PASSWORD2 }}" update_playlist.zip -d "$TMPDIR"
-          python "$TMPDIR/update_playlist.py" || echo "⚠️ Python script failed"
-          rm -rf "$TMPDIR"
+      - name: Delete Script After Run
+        if: always()
+        run: rm -f update_playlist.py
 
-      - name: Add header & timestamp
+      - name: Add header and save as playlist.m3u
         run: |
+          # Get current BD time in 12-hour format with AM/PM
           LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
+
           {
             echo "# ${{ secrets.CREDIT_LINE1 }}"
             echo "# ${{ secrets.CREDIT_LINE2 }}"
@@ -50,8 +41,7 @@ jobs:
             echo "# Last update: $LAST_UPDATE (Bangladesh Time)"
             echo
             cat playlist.m3u
-          } > tmp_playlist.m3u
-          mv tmp_playlist.m3u playlist.m3u
+          } > playlist.tmp && mv playlist.tmp playlist.m3u
 
       - name: Commit and push if playlist changed
         run: |
