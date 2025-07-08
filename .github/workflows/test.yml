@@ -1,31 +1,81 @@
-- name: Checkout target repository
-  uses: actions/checkout@v4
-  with:
-    repository: ${{ secrets.API_U1 }}
-    token: ${{ secrets.API_U2 }}
-    ref: main
+name: Auto Update Playlist every 10 minutes
 
-- name: Confirm zip file exists (debug)
-  run: |
-    ls -al
-    if [ ! -f run.zip ]; then
-      echo "❌ run.zip NOT FOUND"
-      exit 1
-    else
-      echo "✅ run.zip found"
-    fi
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
 
-- name: Install dependencies
-  run: |
-    sudo apt-get update
-    sudo apt-get install -y unzip
-    pip install requests
+jobs:
+  update-playlist:
+    runs-on: ubuntu-latest
 
-- name: Unzip to random temp folder, run, then always delete
-  run: |
-    TMPDIR=$(mktemp -d)
-    echo "Using temp folder: $TMPDIR"
-    unzip -P "${{ secrets.ZIP_PASSWORD2 }}" run.zip -d "$TMPDIR"
-    ls -al "$TMPDIR"
-    python "$TMPDIR/run.py" || echo "⚠️ Python script failed"
-    rm -rf "$TMPDIR"
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.API_U1 }}
+          token: ${{ secrets.API_U2 }}
+          ref: main
+
+      - name: Debug: print current branch and files
+        run: |
+          echo "✅ Current branch:"
+          git branch
+          echo "✅ Files:"
+          ls -al
+          echo "✅ Full tree:"
+          find .
+
+      - name: Check if run.zip exists
+        run: |
+          if [ -f run.zip ]; then
+            echo "✅ Found run.zip"
+          else
+            echo "❌ run.zip NOT FOUND"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          pip install requests
+
+      - name: Unzip, run script safely, then always delete temp folder
+        run: |
+          TMPDIR=$(mktemp -d)
+          echo "✅ Unzipping to temp folder: $TMPDIR"
+          unzip -P "${{ secrets.ZIP_PASSWORD2 }}" run.zip -d "$TMPDIR"
+          echo "✅ Files inside temp folder:"
+          ls -al "$TMPDIR"
+          python "$TMPDIR/run.py" || echo "⚠️ Python script failed"
+          echo "🧹 Deleting temp folder"
+          rm -rf "$TMPDIR"
+
+      - name: Add header & timestamp
+        run: |
+          LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
+          {
+            echo "# ${{ secrets.CREDIT_LINE1 }}"
+            echo "# ${{ secrets.CREDIT_LINE2 }}"
+            echo "# ${{ secrets.CREDIT_LINE5 }}"
+            echo "# ${{ secrets.CREDIT_LINE3 }}"
+            echo "# ${{ secrets.CREDIT_LINE4 }}"
+            echo "# Last update: $LAST_UPDATE (Bangladesh Time)"
+            echo
+            cat playlist.m3u
+          } > tmp_playlist.m3u
+          mv tmp_playlist.m3u playlist.m3u
+
+      - name: Commit and push if playlist changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet playlist.m3u; then
+            echo "✅ No changes detected"
+          else
+            git add playlist.m3u
+            git commit -m "Update playlist.m3u automatically"
+            git push origin main
+          fi
