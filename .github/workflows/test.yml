@@ -10,12 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout target repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          repository: ${{ secrets.API_U1 }}
-          token: ${{ secrets.API_U2 }}
-          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
