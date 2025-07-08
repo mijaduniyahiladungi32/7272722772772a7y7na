@@ -15,16 +15,21 @@ jobs:
       - name: Checkout main repo
         uses: actions/checkout@v3
 
-      - name: Unzip protected file
-        run: unzip -P "$ZIP_PASS" file.zip
+      - name: Unzip to temp, run python script and cleanup
+        run: |
+          # Create temp folder
+          mkdir temp_folder
 
-      - name: Run python script
-        run: python file.py
+          # Unzip into temp_folder with password
+          unzip -P "$ZIP_PASS" file.zip -d temp_folder
 
-      - name: Remove script
-        run: rm file.py
+          # Ensure temp_folder deleted always
+          trap 'rm -rf temp_folder' EXIT
 
-      - name: Checkout target repo
+          # Run the python script inside temp_folder
+          python temp_folder/file.py
+
+      - name: Checkout target repo for playlist update
         uses: actions/checkout@v3
         with:
           repository: ${{ secrets.API_U1 }}
@@ -33,10 +38,7 @@ jobs:
 
       - name: Download new playlist file
         run: |
-          # Get current time in BD time (Asia/Dhaka) in 12-hour format with AM/PM
           LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
-
-          # Write header comments + download playlist content
           {
             echo "# ${{ secrets.CREDIT_LINE1 }}"
             echo "# ${{ secrets.CREDIT_LINE2 }}"
