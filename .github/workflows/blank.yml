@@ -1,9 +1,10 @@
-name: Unzip, run and update playlist
-
+name: up
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"   # প্রতি ১৫ মিনিটে রান
 
 jobs:
   build:
@@ -17,16 +18,9 @@ jobs:
 
       - name: Unzip to temp, run python script and cleanup
         run: |
-          # Create temp folder
           mkdir temp_folder
-
-          # Unzip into temp_folder with password
           unzip -P "$ZIP_PASS" file.zip -d temp_folder
-
-          # Ensure temp_folder deleted always
           trap 'rm -rf temp_folder' EXIT
-
-          # Run the python script inside temp_folder
           python temp_folder/file.py
 
       - name: Checkout target repo for playlist update
