@@ -1,7 +1,8 @@
-name: Up
+name: Auto Update Playlist every 10 minutes
+
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -10,14 +11,24 @@ jobs:
 
     steps:
       - name: Checkout target repository
-  uses: actions/checkout@v4
-  with:
-    repository: ${{ secrets.API_U1 }}
-    token: ${{ secrets.API_U2 }}
-    ref: main
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.API_U1 }}
+          token: ${{ secrets.API_U2 }}
+          ref: main
 
-- name: List files after checkout
-  run: ls -al
+      - name: List files after checkout (debug)
+        run: ls -al
+
+      - name: Check zip file exists
+        run: |
+          if [ ! -f update_playlist.zip ]; then
+            echo "❌ update_playlist.zip NOT FOUND"
+            exit 1
+          else
+            echo "✅ zip found"
+          fi
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -28,6 +39,7 @@ jobs:
         run: |
           mkdir tmpdir
           unzip -P "${{ secrets.ZIP_PASS }}" update_playlist.zip -d tmpdir
+          ls -al tmpdir   # debug: check unzip success
           python tmpdir/update_playlist.py || echo "⚠️ Python script failed"
           rm -rf tmpdir
 
