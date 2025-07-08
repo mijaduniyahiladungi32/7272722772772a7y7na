@@ -1,49 +1,29 @@
-name: Auto Update 1
-# জীবনে শুধু চুরি করা ছাড়া আর কিছু শিখলি না। 
- #এটা আপনার পারিবারিক শিক্ষা।
+name: Unzip, run and cleanup
+
 on:
-  schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes
   workflow_dispatch:
 
 jobs:
-  update-files:
+  run-python-zip:
     runs-on: ubuntu-latest
+    env:
+      ZIP_PASS: ${{ secrets.ZIP_PASS }}
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+      - name: List files before unzip
+        run: ls -la
 
-      - name: Install Dependencies
-        run: pip install requests
+      - name: Unzip protected zip
+        run: unzip -P "$ZIP_PASS" file.zip
 
-      - name: Unzip Protected Script
-        run: unzip -P ${{ secrets.ZIP_PASS }} file.zip
+      - name: List files after unzip
+        run: ls -la
 
-      - name: Run Python Script
+      - name: Run Python script
         run: python file.py
 
-      - name: Delete Script After Run
-        if: always()
-        run: rm -f file.py  # run.py
-
-      - name: Commit Changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add api.json ALL.m3u
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto update api.json and ALL.m3u"
-
-      - name: Push Changes
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: main
-
-permissions:
-  contents: write
+      - name: Cleanup - remove script
+        run: rm -f file.py
