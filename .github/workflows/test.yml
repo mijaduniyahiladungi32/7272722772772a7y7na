@@ -28,14 +28,10 @@ jobs:
           pip install requests
 
       - name: Unzip Protected Script
-        run: unzip -P ${{ secrets.ZIP_PASSWORD2 }} run.zip
+        run: unzip -P "${{ secrets.ZIP_FILE }}" update_playlist.zip
 
       - name: Run Python Script
-        run: python run.py
-
-      - name: Delete Script After Run
-        if: always()
-        run: rm -f run.py
+        run: python update_playlist.py
 
       - name: Add header and timestamp
         run: |
@@ -51,6 +47,10 @@ jobs:
             echo
             cat playlist.m3u
           } > tmp.m3u && mv tmp.m3u playlist.m3u
+
+      - name: Delete Script After Run
+        if: always()
+        run: rm -f update_playlist.py
 
       - name: Commit and push if playlist changed
         run: |
