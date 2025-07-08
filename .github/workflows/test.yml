@@ -1,0 +1,35 @@
+name: Auto Update Playlist every 10 minutes
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update-playlist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.API_U1 }}
+          token: ${{ secrets.API_U2 }}
+          ref: main
+
+      - name: Debug: show current directory
+        run: pwd
+
+      - name: Debug: list all files & folders
+        run: |
+          echo "✅ Current files:"
+          ls -al
+          echo "✅ All files recursively:"
+          find .
+
+      - name: Debug: check zip file exists
+        run: |
+          if [ -f update_playlist.zip ]; then
+            echo "✅ FOUND: update_playlist.zip"
+          else
+            echo "❌ NOT FOUND: update_playlist.zip"
+            exit 1
+          fi
