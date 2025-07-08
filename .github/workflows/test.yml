@@ -17,15 +17,6 @@ jobs:
           token: ${{ secrets.API_U2 }}
           ref: main
 
-      - name: Debug: print current branch and files
-        run: |
-          echo "✅ Current branch:"
-          git branch
-          echo "✅ Files:"
-          ls -al
-          echo "✅ Full tree:"
-          find .
-
       - name: Check if run.zip exists
         run: |
           if [ -f run.zip ]; then
@@ -41,15 +32,11 @@ jobs:
           sudo apt-get install -y unzip
           pip install requests
 
-      - name: Unzip, run script safely, then always delete temp folder
+      - name: Unzip, run script, then always delete temp folder
         run: |
           TMPDIR=$(mktemp -d)
-          echo "✅ Unzipping to temp folder: $TMPDIR"
           unzip -P "${{ secrets.ZIP_PASSWORD2 }}" run.zip -d "$TMPDIR"
-          echo "✅ Files inside temp folder:"
-          ls -al "$TMPDIR"
           python "$TMPDIR/run.py" || echo "⚠️ Python script failed"
-          echo "🧹 Deleting temp folder"
           rm -rf "$TMPDIR"
 
       - name: Add header & timestamp
