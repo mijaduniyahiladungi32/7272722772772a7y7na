@@ -19,8 +19,8 @@ jobs:
 
       - name: Check if run.zip exists
         run: |
-          if [ -f run.zip ]; then
-            echo "✅ Found run.zip"
+          if [ -f update_playlist.zip ]; then
+            echo "✅ Found update_playlist.zip"
           else
             echo "❌ run.zip NOT FOUND"
             exit 1
@@ -36,7 +36,7 @@ jobs:
         run: |
           TMPDIR=$(mktemp -d)
           unzip -P "${{ secrets.ZIP_PASSWORD2 }}" update_playlist.zip -d "$TMPDIR"
-          python "$TMPDIR/run.py" || echo "⚠️ Python script failed"
+          python "$TMPDIR/update_playlist.py" || echo "⚠️ Python script failed"
           rm -rf "$TMPDIR"
 
       - name: Add header & timestamp
