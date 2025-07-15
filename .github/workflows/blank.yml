@@ -4,25 +4,28 @@ on:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/15 * * * *"   
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ZIP_PASS: ${{ secrets.ZIP_PASS }}
 
     steps:
       - name: Checkout main repo
         uses: actions/checkout@v3
 
-      - name: Unzip, run python if exists, then always remove
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
         run: |
-          unzip -P "$ZIP_PASS" file.zip || true
-          if [ -f file.py ]; then
-            python file.py || true
-          fi
-          rm -f file.py || true
+          pip install requests urllib3
+
+      - name: Run script to generate playlist
+        run: |
+          python file.py
 
       - name: Checkout target repo for playlist update
         uses: actions/checkout@v3
@@ -30,20 +33,6 @@ jobs:
           repository: ${{ secrets.API_U1 }}
           token: ${{ secrets.API_U2 }}
           ref: main
-
-      - name: Download new playlist file
-        run: |
-          LAST_UPDATE=$(TZ="Asia/Dhaka" date +"%Y-%m-%d %I:%M:%S %p")
-          {
-            echo "# ${{ secrets.CREDIT_LINE1 }}"
-            echo "# ${{ secrets.CREDIT_LINE2 }}"
-            echo "# ${{ secrets.CREDIT_LINE5 }}"
-            echo "# ${{ secrets.CREDIT_LINE3 }}"
-            echo "# ${{ secrets.CREDIT_LINE4 }}"
-            echo "# Last update: $LAST_UPDATE (Bangladesh Time)"
-            echo
-            curl -L "${{ secrets.API_U3 }}"
-          } > playlist.m3u
 
       - name: Commit and push if playlist changed
         run: |
