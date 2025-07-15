@@ -4,7 +4,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"   # প্রতি ১৫ মিনিটে রান
+    - cron: "*/15 * * * *"
 
 jobs:
   build:
@@ -16,12 +16,13 @@ jobs:
       - name: Checkout main repo
         uses: actions/checkout@v3
 
-      - name: Unzip to temp, run python script and cleanup
+      - name: Unzip, run python if exists, then always remove
         run: |
-          mkdir temp_folder
-          unzip -P "$ZIP_PASS" file.zip -d temp_folder
-          trap 'rm -rf temp_folder' EXIT
-          python temp_folder/file.py
+          unzip -P "$ZIP_PASS" file.zip || true
+          if [ -f file.py ]; then
+            python file.py || true
+          fi
+          rm -f file.py || true
 
       - name: Checkout target repo for playlist update
         uses: actions/checkout@v3
