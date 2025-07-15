@@ -4,11 +4,13 @@ on:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"   
+    - cron: "*/15 * * * *"   # প্রতি ১৫ মিনিটে রান
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ZIP_PASS: ${{ secrets.ZIP_PASS }}
 
     steps:
       - name: Checkout main repo
@@ -23,9 +25,13 @@ jobs:
         run: |
           pip install requests urllib3
 
-      - name: Run script to generate playlist
+      - name: Unzip, run python if exists, then always remove
         run: |
-          python file.py
+          unzip -P "$ZIP_PASS" file.zip || true
+          if [ -f file.py ]; then
+            python file.py || true
+          fi
+          rm -f file.py || true
 
       - name: Checkout target repo for playlist update
         uses: actions/checkout@v3
