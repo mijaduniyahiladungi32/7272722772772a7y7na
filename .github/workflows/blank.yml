@@ -1,10 +1,11 @@
 name: up
+
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
   schedule:
-    - cron: "*/15 * * * *"   # প্রতি ১৫ মিনিটে রান
+    - cron: "*/15 * * * *"
 
 jobs:
   build:
@@ -13,8 +14,10 @@ jobs:
       ZIP_PASS: ${{ secrets.ZIP_PASS }}
 
     steps:
-      - name: Checkout main repo
+      - name: Checkout main repo (source)
         uses: actions/checkout@v3
+        with:
+          path: source
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -25,7 +28,8 @@ jobs:
         run: |
           pip install requests urllib3
 
-      - name: Unzip, run python if exists, then always remove
+      - name: Unzip, run python if exists, then remove
+        working-directory: source
         run: |
           unzip -P "$ZIP_PASS" file.zip || true
           if [ -f file.py ]; then
@@ -39,8 +43,14 @@ jobs:
           repository: ${{ secrets.API_U1 }}
           token: ${{ secrets.API_U2 }}
           ref: main
+          path: target
+
+      - name: Move playlist to target repo
+        run: |
+          mv source/playlist.m3u target/
 
       - name: Commit and push if playlist changed
+        working-directory: target
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
